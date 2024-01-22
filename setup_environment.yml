@@ -1,0 +1,30 @@
+---
+- name: Install Ansible and Setup New Environment
+  hosts: localhost
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Install Python
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+
+    - name: Install Ansible
+      apt:
+        name: ansible
+        state: present
+
+    - name: Install or Upgrade Packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages_to_install.split(',') }}"
+      when: packages_to_install is defined
+
+    - name: Configure Git
+      git_config:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+      loop:
+        - { name: "user.name", value: "{{ git_user_name }}" }
+        - { name: "user.email", value: "{{ git_user_email }}" }
+      when: git_user_name is defined and git_user_email is defined

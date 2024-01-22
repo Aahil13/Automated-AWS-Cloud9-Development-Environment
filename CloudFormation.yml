@@ -1,0 +1,51 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS Cloud9 Environment with AWS CodeCommit Repository
+
+Parameters:
+  EC2InstanceType:
+    Description: EC2 instance type on which IDE runs
+    Type: String
+    Default: t2.micro
+
+  AutoHibernateTimeout:
+    Description: How many minutes idle before shutting down the IDE. Options, 30min, 1hr, 4hr, 1day, 1week, Never (0)
+    Type: Number
+    Default: 30
+
+  Env:
+    Description: Please specify the target Env. Used for tagging and resource names. Mandatory LOWER CASE.
+    Type: String
+    Default: "dev"
+
+  User:
+    Description: Please specify the User.
+    Type: String
+    Default: "test"
+
+  RepositoryName:
+    Description: CodeCommit Repository Name
+    Type: String
+    Default: "cloud9-script"
+
+Resources:
+  C9IDE:
+    Type: "AWS::Cloud9::EnvironmentEC2"
+    Properties:
+      Name: !Sub "${User}-${Env}-Cloud9-IDE"
+      Description: !Sub "${User} Cloud9 IDE"
+      AutomaticStopTimeMinutes: !Ref "AutoHibernateTimeout"
+      InstanceType: !Ref "EC2InstanceType"
+      ImageId: "ubuntu-22.04-x86_64"
+      Repositories:
+        - RepositoryUrl: !Sub "https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/${RepositoryName}"
+          PathComponent: !Sub "codecommit/${RepositoryName}"
+
+Outputs:
+  Cloud9URL:
+    Description: Cloud9 Environment
+    Value:
+      Fn::Join:
+        - ""
+        - - !Sub https://${AWS::Region}.console.aws.amazon.com/cloud9/ide/
+          - !Ref "C9IDE"
